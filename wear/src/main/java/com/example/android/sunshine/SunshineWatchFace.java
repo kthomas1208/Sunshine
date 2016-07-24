@@ -36,6 +36,7 @@ import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
 import java.lang.ref.WeakReference;
+import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -48,10 +49,10 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
 
     /**
-     * Update rate in milliseconds for interactive mode. We update once a second since seconds are
-     * displayed in interactive mode.
+     * Update rate in milliseconds for interactive mode. We update twice a second to blink the
+     * colon
      */
-    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.SECONDS.toMillis(1);
+    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.MILLISECONDS.toMillis(500);
 
     /**
      * Handler message id for updating the time periodically in interactive mode.
@@ -88,8 +89,17 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         boolean mRegisteredTimeZoneReceiver = false;
         Paint mBackgroundPaint;
         Paint mTextPaint;
+        Paint mHourPaint;
+        Paint mColonPaint;
+        Paint mMinutePaint;
+        Paint mDatePaint;
+        Paint mWeatherPaint;
+        Paint mTempHighPaint;
+        Paint mTempLowPaint;
         boolean mAmbient;
+        boolean mShouldDrawColons;
         Time mTime;
+        Date mDate;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -122,10 +132,19 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
 
             mBackgroundPaint = new Paint();
-            mBackgroundPaint.setColor(resources.getColor(R.color.background));
 
-            mTextPaint = new Paint();
-            mTextPaint = createTextPaint(resources.getColor(R.color.digital_text));
+
+            mBackgroundPaint.setColor(getColor(R.color.primary));
+
+            //mTextPaint = new Paint();
+            mTextPaint = createTextPaint(getColor(R.color.digital_text));
+            mHourPaint = createTextPaint(getColor(R.color.digital_text));
+            mColonPaint = createTextPaint(getColor(R.color.digital_text));
+            mMinutePaint = createTextPaint(getColor(R.color.digital_text));
+            mDatePaint = createTextPaint(getColor(R.color.primary_light));
+            mWeatherPaint = createTextPaint(getColor(R.color.digital_text));
+            mTempHighPaint = createTextPaint(getColor(R.color.digital_text));
+            mTempLowPaint = createTextPaint(getColor(R.color.primary_light));
 
             mTime = new Time();
         }
@@ -193,6 +212,9 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                     ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
 
             mTextPaint.setTextSize(textSize);
+            mHourPaint.setTextSize(textSize);
+            mMinutePaint.setTextSize(textSize);
+            mColonPaint.setTextSize(textSize);
         }
 
         @Override
@@ -223,32 +245,14 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             updateTimer();
         }
 
-        /**
-         * Captures tap event (and tap type) and toggles the background color if the user finishes
-         * a tap.
-         */
-        @Override
-        public void onTapCommand(int tapType, int x, int y, long eventTime) {
-            Resources resources = SunshineWatchFace.this.getResources();
-            switch (tapType) {
-                case TAP_TYPE_TOUCH:
-                    // The user has started touching the screen.
-                    break;
-                case TAP_TYPE_TOUCH_CANCEL:
-                    // The user has started a different gesture or otherwise cancelled the tap.
-                    break;
-                case TAP_TYPE_TAP:
-                    // The user has completed the tap gesture.
-                    mTapCount++;
-                    mBackgroundPaint.setColor(resources.getColor(mTapCount % 2 == 0 ?
-                            R.color.background : R.color.background2));
-                    break;
-            }
-            invalidate();
-        }
 
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
+
+            // Show colons for the first half of each second so the colons blink on when the time
+            // updates.
+            mShouldDrawColons = (System.currentTimeMillis() % 1000) < 500;
+
             // Draw the background.
             if (isInAmbientMode()) {
                 canvas.drawColor(Color.BLACK);
@@ -256,12 +260,30 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
             }
 
-            // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
+            float x = mXOffset;
+
+            // Draw the hours
             mTime.setToNow();
-            String text = mAmbient
-                    ? String.format("%d:%02d", mTime.hour, mTime.minute)
-                    : String.format("%d:%02d:%02d", mTime.hour, mTime.minute, mTime.second);
-            canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
+            String hourText = String.format("%d", mTime.hour);
+            canvas.drawText(hourText, x, mYOffset, mHourPaint);
+            x += mHourPaint.measureText(hourText);
+
+            // Draw the colon. Blink if interactive mode.
+            if(mShouldDrawColons)
+                canvas.drawText(":", x, mYOffset, mColonPaint);
+            x += mColonPaint.measureText(":");
+
+            // Draw the minutes.
+            String minuteText = String.format("%02d", mTime.minute);
+            canvas.drawText(minuteText, x, mYOffset, mMinutePaint);
+
+            // Draw the date (if interactive)
+
+            // Draw a horizontal line (if interactive)
+
+            // Draw the weather icon
+
+            // Draw the high and low temp
         }
 
         /**
