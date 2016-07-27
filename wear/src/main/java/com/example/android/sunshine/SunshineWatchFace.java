@@ -170,7 +170,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         }
 
         private void initFormats() {
-            mDayOfWeekFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
+            mDayOfWeekFormat = new SimpleDateFormat("EEE", Locale.getDefault());
             mDayOfWeekFormat.setCalendar(mCalendar);
             mDateFormat = DateFormat.getDateFormat(SunshineWatchFace.this);
             mDateFormat.setCalendar(mCalendar);
@@ -240,6 +240,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mHourPaint.setTextSize(textSize);
             mMinutePaint.setTextSize(textSize);
             mColonPaint.setTextSize(textSize);
+            mDatePaint.setTextSize(resources.getDimension(R.dimen.digital_date_text_size));
         }
 
         @Override
@@ -316,9 +317,9 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             canvas.drawText(minuteText, x, mYOffset, mMinutePaint);
 
             // Draw the date (if interactive)
-//            canvas.drawText(
-//                    mDayOfWeekFormat.format(mDate),
-//                    mXOffset, mYOffset + mLineHeight, mDatePaint);
+            canvas.drawText(
+                    mDayOfWeekFormat.format(mDate).toUpperCase(),
+                    mXOffset, mYOffset + mLineHeight, mDatePaint);
 
             // Draw a horizontal line (if interactive)
 
