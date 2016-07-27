@@ -31,12 +31,15 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
-import android.text.format.Time;
+import android.text.format.DateFormat;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -98,19 +101,25 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         Paint mTempLowPaint;
         boolean mAmbient;
         boolean mShouldDrawColons;
-        Time mTime;
+        SimpleDateFormat mDayOfWeekFormat;
+        java.text.DateFormat mDateFormat;
+        //Time mTime;
+        Calendar mCalendar;
         Date mDate;
+
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                mTime.clear(intent.getStringExtra("time-zone"));
-                mTime.setToNow();
+                mCalendar.setTimeZone(TimeZone.getDefault());
+                initFormats();
+                invalidate();
             }
         };
         int mTapCount;
 
         float mXOffset;
         float mYOffset;
+        float mLineHeight;
 
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
@@ -136,6 +145,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             mBackgroundPaint.setColor(getColor(R.color.primary));
 
+            mLineHeight = resources.getDimension(R.dimen.digital_line_height);
+
             //mTextPaint = new Paint();
             mTextPaint = createTextPaint(getColor(R.color.digital_text));
             mHourPaint = createTextPaint(getColor(R.color.digital_text));
@@ -146,13 +157,23 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mTempHighPaint = createTextPaint(getColor(R.color.digital_text));
             mTempLowPaint = createTextPaint(getColor(R.color.primary_light));
 
-            mTime = new Time();
+            //mTime = new Time();
+            mCalendar = Calendar.getInstance();
+            mDate = new Date();
+            initFormats();
         }
 
         @Override
         public void onDestroy() {
             mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
             super.onDestroy();
+        }
+
+        private void initFormats() {
+            mDayOfWeekFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
+            mDayOfWeekFormat.setCalendar(mCalendar);
+            mDateFormat = DateFormat.getDateFormat(SunshineWatchFace.this);
+            mDateFormat.setCalendar(mCalendar);
         }
 
         private Paint createTextPaint(int textColor) {
@@ -170,9 +191,13 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             if (visible) {
                 registerReceiver();
 
-                // Update time zone in case it changed while we weren't visible.
-                mTime.clear(TimeZone.getDefault().getID());
-                mTime.setToNow();
+                // Update time zone in case it changed while we weren't visible. // TODO: 7/27/16 delete this
+//                mTime.clear(TimeZone.getDefault().getID());
+//                mTime.setToNow();
+
+                // Update time zone and date formats, in case they changed while we weren't visible.
+                mCalendar.setTimeZone(TimeZone.getDefault());
+                initFormats();
             } else {
                 unregisterReceiver();
             }
@@ -251,7 +276,12 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             // Show colons for the first half of each second so the colons blink on when the time
             // updates.
-            mShouldDrawColons = (System.currentTimeMillis() % 1000) < 500;
+            long now = System.currentTimeMillis();
+            mShouldDrawColons = (now % 1000) < 500;
+            mCalendar.setTimeInMillis(now);
+            mDate.setTime(now);
+            boolean is24Hour = DateFormat.is24HourFormat(SunshineWatchFace.this);
+
 
             // Draw the background.
             if (isInAmbientMode()) {
@@ -263,8 +293,16 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             float x = mXOffset;
 
             // Draw the hours
-            mTime.setToNow();
-            String hourText = String.format("%d", mTime.hour);
+            String hourText;
+            if (is24Hour) {
+                hourText = formatTwoDigitNumber(mCalendar.get(Calendar.HOUR_OF_DAY));
+            } else {
+                int hour = mCalendar.get(Calendar.HOUR);
+                if (hour == 0) {
+                    hour = 12;
+                }
+                hourText = String.valueOf(hour);
+            }
             canvas.drawText(hourText, x, mYOffset, mHourPaint);
             x += mHourPaint.measureText(hourText);
 
@@ -274,16 +312,23 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             x += mColonPaint.measureText(":");
 
             // Draw the minutes.
-            String minuteText = String.format("%02d", mTime.minute);
+            String minuteText = formatTwoDigitNumber(mCalendar.get(Calendar.MINUTE));
             canvas.drawText(minuteText, x, mYOffset, mMinutePaint);
 
             // Draw the date (if interactive)
+//            canvas.drawText(
+//                    mDayOfWeekFormat.format(mDate),
+//                    mXOffset, mYOffset + mLineHeight, mDatePaint);
 
             // Draw a horizontal line (if interactive)
 
             // Draw the weather icon
 
             // Draw the high and low temp
+        }
+
+        private String formatTwoDigitNumber(int hour) {
+            return String.format("%02d", hour);
         }
 
         /**
