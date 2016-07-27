@@ -170,7 +170,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         }
 
         private void initFormats() {
-            mDayOfWeekFormat = new SimpleDateFormat("EEE", Locale.getDefault());
+            mDayOfWeekFormat = new SimpleDateFormat("EEE, MMM d yyyy ", Locale.getDefault());
             mDayOfWeekFormat.setCalendar(mCalendar);
             mDateFormat = DateFormat.getDateFormat(SunshineWatchFace.this);
             mDateFormat.setCalendar(mCalendar);
