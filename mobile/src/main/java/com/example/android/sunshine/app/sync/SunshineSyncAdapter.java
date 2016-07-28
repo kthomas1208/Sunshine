@@ -93,6 +93,26 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
     @Override
     public void onConnected(@Nullable Bundle bundle) {
 
+        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create("/weather-data");
+
+        putDataMapRequest.getDataMap().putString("test-string", "42");
+        putDataMapRequest.getDataMap().putLong("timestamp",System.currentTimeMillis()); //for debug
+//        putDataMapRequest.getDataMap().putStringArray("highlow-temp",
+//                new String[]{highString,lowString});
+
+        PutDataRequest request = putDataMapRequest.asPutDataRequest();
+        request.setUrgent(); // for debug
+        Wearable.DataApi.putDataItem(mGoogleApiClient,request)
+                .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                    @Override
+                    public void onResult(@NonNull DataApi.DataItemResult dataItemResult) {
+                        if(dataItemResult.getStatus().isSuccess())
+                            Log.d(LOG_TAG, "Successfully sent wearable data");
+                        else
+                            Log.e(LOG_TAG, "Error sending wearable data");
+                    }
+                });
+
     }
 
     @Override
@@ -437,25 +457,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
                 .build();
         mGoogleApiClient.connect();
 
-        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create("/weather-data");
 
-        putDataMapRequest.getDataMap().putString("test-string", "42");
-        putDataMapRequest.getDataMap().putLong("timestamp",System.currentTimeMillis()); //for debug
-//        putDataMapRequest.getDataMap().putStringArray("highlow-temp",
-//                new String[]{highString,lowString});
-
-        PutDataRequest request = putDataMapRequest.asPutDataRequest();
-        request.setUrgent(); // for debug
-        Wearable.DataApi.putDataItem(mGoogleApiClient,request)
-                .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-                    @Override
-                    public void onResult(@NonNull DataApi.DataItemResult dataItemResult) {
-                        if(dataItemResult.getStatus().isSuccess())
-                            Log.d(LOG_TAG, "Successfully sent wearable data");
-                        else
-                            Log.e(LOG_TAG, "Error sending wearable data");
-                    }
-                });
     }
 
     private void notifyWeather() {
