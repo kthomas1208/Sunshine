@@ -34,7 +34,6 @@ import android.support.annotation.Nullable;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.DateFormat;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
@@ -124,6 +123,10 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         Calendar mCalendar;
         Date mDate;
 
+        String mIconID;
+        String mHighTemp;
+        String mLowTemp;
+
         private GoogleApiClient mGoogleApiClient;
 
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
@@ -189,7 +192,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             mGoogleApiClient.connect();
 
-            Log.v(LOG_TAG, "test");
+            //Log.v(LOG_TAG, "test");
         }
 
         @Override
@@ -278,6 +281,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mMinutePaint.setTextSize(textSize);
             mColonPaint.setTextSize(textSize);
             mDatePaint.setTextSize(resources.getDimension(R.dimen.digital_date_text_size));
+            mTempHighPaint.setTextSize(resources.getDimension(R.dimen.temp_text_size));
+            mTempLowPaint.setTextSize(resources.getDimension(R.dimen.temp_text_size));
         }
 
         @Override
@@ -354,8 +359,9 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             canvas.drawText(minuteText, x, mYOffset, mMinutePaint);
 
             // Draw the date (if interactive)
+            String dayOfWeekDisplay = mDayOfWeekFormat.format(mDate).toUpperCase();
             canvas.drawText(
-                    mDayOfWeekFormat.format(mDate).toUpperCase(),
+                    dayOfWeekDisplay,
                     mXOffset, mYOffset + mLineHeight, mDatePaint);
 
             // Draw a horizontal line (if interactive)
@@ -363,6 +369,17 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             // Draw the weather icon
 
             // Draw the high and low temp
+            if(mHighTemp != null && mLowTemp != null) {
+                x = canvas.getWidth()/2;
+                String highTempDisplay = mHighTemp + "°";
+                canvas.drawText(highTempDisplay,x,mYOffset + 2*mLineHeight, mTempHighPaint);
+                x += mTempHighPaint.measureText(highTempDisplay) + 5;
+
+                String lowTempDisplay = mLowTemp + "°";
+                canvas.drawText(lowTempDisplay,x,mYOffset + 2*mLineHeight, mTempLowPaint);
+            }
+
+
         }
 
         private String formatTwoDigitNumber(int hour) {
@@ -404,7 +421,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         @Override
         public void onConnected(@Nullable Bundle bundle) {
             Wearable.DataApi.addListener(mGoogleApiClient, this);
-            Log.d(LOG_TAG, "WEARABLE IS CONNECTED:");
+            //Log.d(LOG_TAG, "WEARABLE IS CONNECTED:");
         }
 
         @Override
@@ -417,13 +434,20 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             for (DataEvent dataEvent : dataEventBuffer) {
 
                 if (dataEvent.getType() == DataEvent.TYPE_CHANGED) {
-                    Log.d(LOG_TAG, "WEARABLE DATA IS HERE: " + dataEvent.toString());
+                    //Log.d(LOG_TAG, "WEARABLE DATA IS HERE: " + dataEvent.toString());
 
                     DataMap dataMap = DataMapItem.fromDataItem(dataEvent.getDataItem()).getDataMap();
                     String path = dataEvent.getDataItem().getUri().getPath();
                     if(path.equals("/weather-data")){
-                        String test = dataMap.getString("test-string");
-                        Log.d(LOG_TAG, "TEST STRING: " + test);
+//                        String test = dataMap.getString("test-string");
+//                        mIconID = dataMap.getString("icon-id");
+//                        mHighTemp = dataMap.getString("high-temp");
+//                        mLowTemp = dataMap.getString("low-temp");
+
+                        mHighTemp = "25";
+                        mLowTemp = "16";
+                        //Log.d(LOG_TAG, "TEST STRING: " + test);
+                        invalidate();
                     }
                 }
 

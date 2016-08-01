@@ -7,4 +7,5 @@
     <dimen name="digital_x_offset_round">50dp</dimen>
     <dimen name="digital_y_offset">90dp</dimen>
     <dimen name="digital_line_height">22dp</dimen>
+    <dimen name="temp_text_size">20dp</dimen>
 </resources>
