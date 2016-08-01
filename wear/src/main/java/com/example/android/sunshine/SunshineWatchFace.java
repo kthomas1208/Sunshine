@@ -29,11 +29,23 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.Wearable;
 
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
@@ -50,6 +62,10 @@ import java.util.concurrent.TimeUnit;
 public class SunshineWatchFace extends CanvasWatchFaceService {
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
+    private static final Typeface BOLD_TYPEFACE =
+            Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
+
+    private final String LOG_TAG = SunshineWatchFace.class.getSimpleName();
 
     /**
      * Update rate in milliseconds for interactive mode. We update twice a second to blink the
@@ -87,7 +103,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         }
     }
 
-    private class Engine extends CanvasWatchFaceService.Engine {
+    private class Engine extends CanvasWatchFaceService.Engine implements DataApi.DataListener,
+            GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
         final Handler mUpdateTimeHandler = new EngineHandler(this);
         boolean mRegisteredTimeZoneReceiver = false;
         Paint mBackgroundPaint;
@@ -106,6 +123,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         //Time mTime;
         Calendar mCalendar;
         Date mDate;
+
+        private GoogleApiClient mGoogleApiClient;
 
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
             @Override
@@ -149,7 +168,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             //mTextPaint = new Paint();
             mTextPaint = createTextPaint(getColor(R.color.digital_text));
-            mHourPaint = createTextPaint(getColor(R.color.digital_text));
+            mHourPaint = createTextPaint(getColor(R.color.digital_text), BOLD_TYPEFACE);
             mColonPaint = createTextPaint(getColor(R.color.digital_text));
             mMinutePaint = createTextPaint(getColor(R.color.digital_text));
             mDatePaint = createTextPaint(getColor(R.color.primary_light));
@@ -161,6 +180,16 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mCalendar = Calendar.getInstance();
             mDate = new Date();
             initFormats();
+
+            mGoogleApiClient = new GoogleApiClient.Builder(SunshineWatchFace.this)
+                    .addApi(Wearable.API)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+
+            mGoogleApiClient.connect();
+
+            Log.v(LOG_TAG, "test");
         }
 
         @Override
@@ -180,6 +209,14 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             Paint paint = new Paint();
             paint.setColor(textColor);
             paint.setTypeface(NORMAL_TYPEFACE);
+            paint.setAntiAlias(true);
+            return paint;
+        }
+
+        Paint createTextPaint(int textColor, Typeface typeface) {
+            Paint paint = new Paint();
+            paint.setColor(textColor);
+            paint.setTypeface(typeface);
             paint.setAntiAlias(true);
             return paint;
         }
@@ -362,6 +399,41 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                         - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
                 mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
             }
+        }
+
+        @Override
+        public void onConnected(@Nullable Bundle bundle) {
+            Wearable.DataApi.addListener(mGoogleApiClient, this);
+            Log.d(LOG_TAG, "WEARABLE IS CONNECTED:");
+        }
+
+        @Override
+        public void onConnectionSuspended(int i) {
+
+        }
+
+        @Override
+        public void onDataChanged(DataEventBuffer dataEventBuffer) {
+            for (DataEvent dataEvent : dataEventBuffer) {
+
+                if (dataEvent.getType() == DataEvent.TYPE_CHANGED) {
+                    Log.d(LOG_TAG, "WEARABLE DATA IS HERE: " + dataEvent.toString());
+
+                    DataMap dataMap = DataMapItem.fromDataItem(dataEvent.getDataItem()).getDataMap();
+                    String path = dataEvent.getDataItem().getUri().getPath();
+                    if(path.equals("/weather-data")){
+                        String test = dataMap.getString("test-string");
+                        Log.d(LOG_TAG, "TEST STRING: " + test);
+                    }
+                }
+
+
+            }
+        }
+
+        @Override
+        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
         }
     }
 }
