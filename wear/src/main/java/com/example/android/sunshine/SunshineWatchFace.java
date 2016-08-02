@@ -341,17 +341,12 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             // Draw everything besides time only if in interactive mode
             if(!isInAmbientMode()) {
-                mHighTemp = "25";
-                mLowTemp = "16";
-                mIconID = 800;
-
                 // Draw the date
                 String dayOfWeekDisplay = mDayOfWeekFormat.format(mDate).toUpperCase();
                 canvas.drawText(
                         dayOfWeekDisplay,
                         mXOffset, mYOffset + mLineHeight, mDatePaint);
 
-                // Draw a horizontal line
 
                 x = mXOffsetWeather;
                 // Draw the weather icon
@@ -424,23 +419,18 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
         @Override
         public void onDataChanged(DataEventBuffer dataEventBuffer) {
+
+            // Get the weather data sent over from the mobile device
             for (DataEvent dataEvent : dataEventBuffer) {
-
                 if (dataEvent.getType() == DataEvent.TYPE_CHANGED) {
-                    //Log.d(LOG_TAG, "WEARABLE DATA IS HERE: " + dataEvent.toString());
-
                     DataMap dataMap = DataMapItem.fromDataItem(dataEvent.getDataItem()).getDataMap();
                     String path = dataEvent.getDataItem().getUri().getPath();
                     if(path.equals("/weather-data")){
-//                        String test = dataMap.getString("test-string");
-//                        mIconID = dataMap.getInt("icon-id");
-//                        mHighTemp = dataMap.getString("high-temp");
-//                        mLowTemp = dataMap.getString("low-temp");
+                        mIconID = dataMap.getInt("icon-id");
+                        mHighTemp = dataMap.getString("high-temp");
+                        mLowTemp = dataMap.getString("low-temp");
 
-                        mHighTemp = "25";
-                        mLowTemp = "16";
-                        mIconID = 800;
-                        //Log.d(LOG_TAG, "TEST STRING: " + test);
+                        // Refresh the screen
                         invalidate();
                     }
                 }

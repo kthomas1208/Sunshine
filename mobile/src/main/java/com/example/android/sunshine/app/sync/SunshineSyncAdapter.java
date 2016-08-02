@@ -95,23 +95,39 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
 
         PutDataMapRequest putDataMapRequest = PutDataMapRequest.create("/weather-data");
 
-        putDataMapRequest.getDataMap().putString("test-string", "42");
         putDataMapRequest.getDataMap().putLong("timestamp",System.currentTimeMillis()); //for debug
-//        putDataMapRequest.getDataMap().putStringArray("highlow-temp",
-//                new String[]{highString,lowString});
 
-        PutDataRequest request = putDataMapRequest.asPutDataRequest();
-        request.setUrgent(); // for debug
-        Wearable.DataApi.putDataItem(mGoogleApiClient,request)
-                .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-                    @Override
-                    public void onResult(@NonNull DataApi.DataItemResult dataItemResult) {
-                        if(dataItemResult.getStatus().isSuccess())
-                            Log.d(LOG_TAG, "Successfully sent wearable data");
-                        else
-                            Log.e(LOG_TAG, "Error sending wearable data");
-                    }
-                });
+        Context context = getContext();
+        String locationQuery = Utility.getPreferredLocation(context);
+        Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
+        Cursor cursor = context.getContentResolver().query(weatherUri, NOTIFY_WEATHER_PROJECTION, null, null, null);
+
+        // Read from DB to get data to send to wearable
+        if (cursor.moveToFirst()) {
+            int weatherId = cursor.getInt(INDEX_WEATHER_ID);
+            double high = cursor.getDouble(INDEX_MAX_TEMP);
+            double low = cursor.getDouble(INDEX_MIN_TEMP);
+
+            putDataMapRequest.getDataMap().putString("high-temp",Integer.toString((int)high));
+            putDataMapRequest.getDataMap().putString("low-temp",Integer.toString((int)low));
+            putDataMapRequest.getDataMap().putInt("icon-id",weatherId);
+
+            PutDataRequest request = putDataMapRequest.asPutDataRequest();
+            request.setUrgent(); // for debug
+            Wearable.DataApi.putDataItem(mGoogleApiClient,request)
+                    .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                        @Override
+                        public void onResult(@NonNull DataApi.DataItemResult dataItemResult) {
+                            if(dataItemResult.getStatus().isSuccess())
+                                Log.d(LOG_TAG, "Successfully sent wearable data");
+                            else
+                                Log.e(LOG_TAG, "Error sending wearable data");
+                        }
+                    });
+        }
+        cursor.close();
+
+
 
     }
 
@@ -416,8 +432,8 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
 
                 updateWidgets();
                 updateMuzei();
-                updateWearable();
                 notifyWeather();
+                updateWearable();
             }
             Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " Inserted");
             setLocationStatus(getContext(), LOCATION_STATUS_OK);
@@ -456,8 +472,6 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
                 .addOnConnectionFailedListener(this)
                 .build();
         mGoogleApiClient.connect();
-
-
     }
 
     private void notifyWeather() {
