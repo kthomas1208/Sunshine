@@ -140,7 +140,10 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
         float mXOffset;
         float mYOffset;
+        float mYOffsetWeather;
         float mLineHeight;
+        float mYOffsetTemp;
+        float mXOffsetWeather;
 
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
@@ -160,6 +163,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                     .build());
             Resources resources = SunshineWatchFace.this.getResources();
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
+            mYOffsetWeather = resources.getDimension(R.dimen.weather_y_offset);
+            mYOffsetTemp = resources.getDimension(R.dimen.temp_line_y_offset);
 
             mBackgroundPaint = new Paint();
 
@@ -167,6 +172,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mBackgroundPaint.setColor(getColor(R.color.primary));
 
             mLineHeight = resources.getDimension(R.dimen.digital_line_height);
+
 
             mTextPaint = createTextPaint(getColor(R.color.digital_text));
             mHourPaint = createTextPaint(getColor(R.color.digital_text));
@@ -212,24 +218,12 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             return paint;
         }
 
-//        Paint createTextPaint(int textColor, Typeface typeface) {
-//            Paint paint = new Paint();
-//            paint.setColor(textColor);
-//            paint.setTypeface(typeface);
-//            paint.setAntiAlias(true);
-//            return paint;
-//        }
-
         @Override
         public void onVisibilityChanged(boolean visible) {
             super.onVisibilityChanged(visible);
 
             if (visible) {
                 registerReceiver();
-
-                // Update time zone in case it changed while we weren't visible. // TODO: 7/27/16 delete this
-//                mTime.clear(TimeZone.getDefault().getID());
-//                mTime.setToNow();
 
                 // Update time zone and date formats, in case they changed while we weren't visible.
                 mCalendar.setTimeZone(TimeZone.getDefault());
@@ -269,6 +263,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             boolean isRound = insets.isRound();
             mXOffset = resources.getDimension(isRound
                     ? R.dimen.digital_x_offset_round : R.dimen.digital_x_offset);
+            mXOffsetWeather = resources.getDimension(isRound
+                    ? R.dimen.weather_x_offset_round : R.dimen.weather_x_offset);
             float textSize = resources.getDimension(isRound
                     ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
 
@@ -327,7 +323,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
             }
 
-            float x = mXOffset;
+            float x = mXOffset + 10;
 
             // Draw the hours
             String hourText = formatTwoDigitNumber(mCalendar.get(Calendar.HOUR_OF_DAY));
@@ -345,6 +341,9 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             // Draw everything besides time only if in interactive mode
             if(!isInAmbientMode()) {
+                mHighTemp = "25";
+                mLowTemp = "16";
+                mIconID = 800;
 
                 // Draw the date
                 String dayOfWeekDisplay = mDayOfWeekFormat.format(mDate).toUpperCase();
@@ -354,22 +353,24 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
                 // Draw a horizontal line
 
+                x = mXOffsetWeather;
                 // Draw the weather icon
                 if (mIconID != -1) {
                     int drawableRes = Utility.getIconResourceForWeatherCondition(mIconID);
                     Bitmap bitmap = BitmapFactory.decodeResource(getResources(), drawableRes);
-                    canvas.drawBitmap(bitmap, mXOffset, mYOffset + mLineHeight, mWeatherPaint);
+                    canvas.drawBitmap(bitmap, x, mYOffsetWeather, mWeatherPaint);
                 }
 
                 // Draw the high and low temp
                 if (mHighTemp != null && mLowTemp != null) {
-                    x = canvas.getWidth() / 2;
+                    x += getResources().getInteger(R.integer.temp_line_x_offset);
+
                     String highTempDisplay = mHighTemp + "°";
-                    canvas.drawText(highTempDisplay, x, mYOffset + 2 * mLineHeight, mTempHighPaint);
+                    canvas.drawText(highTempDisplay, x, mYOffsetWeather + mYOffsetTemp, mTempHighPaint);
                     x += mTempHighPaint.measureText(highTempDisplay) + 5;
 
                     String lowTempDisplay = mLowTemp + "°";
-                    canvas.drawText(lowTempDisplay, x, mYOffset + 2 * mLineHeight, mTempLowPaint);
+                    canvas.drawText(lowTempDisplay, x, mYOffsetWeather + mYOffsetTemp, mTempLowPaint);
                 }
             }
 
