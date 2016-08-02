@@ -144,6 +144,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         float mLineHeight;
         float mYOffsetTemp;
         float mXOffsetWeather;
+        float mXOffsetDate;
 
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
@@ -263,6 +264,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             boolean isRound = insets.isRound();
             mXOffset = resources.getDimension(isRound
                     ? R.dimen.digital_x_offset_round : R.dimen.digital_x_offset);
+            mXOffsetDate = isRound
+                    ? resources.getDimension( R.dimen.date_x_offset_round) : mXOffset;
             mXOffsetWeather = resources.getDimension(isRound
                     ? R.dimen.weather_x_offset_round : R.dimen.weather_x_offset);
             float textSize = resources.getDimension(isRound
@@ -345,7 +348,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 String dayOfWeekDisplay = mDayOfWeekFormat.format(mDate).toUpperCase();
                 canvas.drawText(
                         dayOfWeekDisplay,
-                        mXOffset, mYOffset + mLineHeight, mDatePaint);
+                        mXOffsetDate, mYOffset + mLineHeight, mDatePaint);
 
 
                 x = mXOffsetWeather;
