@@ -319,8 +319,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mShouldDrawColons = (now % 1000) < 500;
             mCalendar.setTimeInMillis(now);
             mDate.setTime(now);
-            boolean is24Hour = DateFormat.is24HourFormat(SunshineWatchFace.this);
-
 
             // Draw the background.
             if (isInAmbientMode()) {
@@ -332,16 +330,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             float x = mXOffset;
 
             // Draw the hours
-            String hourText;
-            if (is24Hour) {
-                hourText = formatTwoDigitNumber(mCalendar.get(Calendar.HOUR_OF_DAY));
-            } else {
-                int hour = mCalendar.get(Calendar.HOUR);
-                if (hour == 0) {
-                    hour = 12;
-                }
-                hourText = String.valueOf(hour);
-            }
+            String hourText = formatTwoDigitNumber(mCalendar.get(Calendar.HOUR_OF_DAY));
             canvas.drawText(hourText, x, mYOffset, mHourPaint);
             x += mHourPaint.measureText(hourText);
 
