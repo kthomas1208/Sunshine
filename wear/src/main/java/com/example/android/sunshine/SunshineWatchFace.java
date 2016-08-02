@@ -21,6 +21,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -123,7 +125,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         Calendar mCalendar;
         Date mDate;
 
-        String mIconID;
+        int mIconID = -1;
         String mHighTemp;
         String mLowTemp;
 
@@ -175,7 +177,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mColonPaint = createTextPaint(getColor(R.color.digital_text));
             mMinutePaint = createTextPaint(getColor(R.color.digital_text));
             mDatePaint = createTextPaint(getColor(R.color.primary_light));
-            mWeatherPaint = createTextPaint(getColor(R.color.digital_text));
+            mWeatherPaint = new Paint();
             mTempHighPaint = createTextPaint(getColor(R.color.digital_text));
             mTempLowPaint = createTextPaint(getColor(R.color.primary_light));
 
@@ -358,27 +360,35 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             String minuteText = formatTwoDigitNumber(mCalendar.get(Calendar.MINUTE));
             canvas.drawText(minuteText, x, mYOffset, mMinutePaint);
 
-            // Draw the date (if interactive)
-            String dayOfWeekDisplay = mDayOfWeekFormat.format(mDate).toUpperCase();
-            canvas.drawText(
-                    dayOfWeekDisplay,
-                    mXOffset, mYOffset + mLineHeight, mDatePaint);
+            // Draw everything besides time only if in interactive mode
+            if(!isInAmbientMode()) {
 
-            // Draw a horizontal line (if interactive)
+                // Draw the date
+                String dayOfWeekDisplay = mDayOfWeekFormat.format(mDate).toUpperCase();
+                canvas.drawText(
+                        dayOfWeekDisplay,
+                        mXOffset, mYOffset + mLineHeight, mDatePaint);
 
-            // Draw the weather icon
+                // Draw a horizontal line
 
-            // Draw the high and low temp
-            if(mHighTemp != null && mLowTemp != null) {
-                x = canvas.getWidth()/2;
-                String highTempDisplay = mHighTemp + "°";
-                canvas.drawText(highTempDisplay,x,mYOffset + 2*mLineHeight, mTempHighPaint);
-                x += mTempHighPaint.measureText(highTempDisplay) + 5;
+                // Draw the weather icon
+                if (mIconID != -1) {
+                    int drawableRes = Utility.getIconResourceForWeatherCondition(mIconID);
+                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), drawableRes);
+                    canvas.drawBitmap(bitmap, mXOffset, mYOffset + mLineHeight, mWeatherPaint);
+                }
 
-                String lowTempDisplay = mLowTemp + "°";
-                canvas.drawText(lowTempDisplay,x,mYOffset + 2*mLineHeight, mTempLowPaint);
+                // Draw the high and low temp
+                if (mHighTemp != null && mLowTemp != null) {
+                    x = canvas.getWidth() / 2;
+                    String highTempDisplay = mHighTemp + "°";
+                    canvas.drawText(highTempDisplay, x, mYOffset + 2 * mLineHeight, mTempHighPaint);
+                    x += mTempHighPaint.measureText(highTempDisplay) + 5;
+
+                    String lowTempDisplay = mLowTemp + "°";
+                    canvas.drawText(lowTempDisplay, x, mYOffset + 2 * mLineHeight, mTempLowPaint);
+                }
             }
-
 
         }
 
@@ -440,12 +450,13 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                     String path = dataEvent.getDataItem().getUri().getPath();
                     if(path.equals("/weather-data")){
 //                        String test = dataMap.getString("test-string");
-//                        mIconID = dataMap.getString("icon-id");
+//                        mIconID = dataMap.getInt("icon-id");
 //                        mHighTemp = dataMap.getString("high-temp");
 //                        mLowTemp = dataMap.getString("low-temp");
 
                         mHighTemp = "25";
                         mLowTemp = "16";
+                        mIconID = 800;
                         //Log.d(LOG_TAG, "TEST STRING: " + test);
                         invalidate();
                     }
