@@ -63,8 +63,6 @@ import java.util.concurrent.TimeUnit;
 public class SunshineWatchFace extends CanvasWatchFaceService {
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
-    private static final Typeface BOLD_TYPEFACE =
-            Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
 
     private final String LOG_TAG = SunshineWatchFace.class.getSimpleName();
 
@@ -121,7 +119,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         boolean mShouldDrawColons;
         SimpleDateFormat mDayOfWeekFormat;
         java.text.DateFormat mDateFormat;
-        //Time mTime;
+
         Calendar mCalendar;
         Date mDate;
 
@@ -139,7 +137,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 invalidate();
             }
         };
-        int mTapCount;
 
         float mXOffset;
         float mYOffset;
@@ -171,9 +168,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             mLineHeight = resources.getDimension(R.dimen.digital_line_height);
 
-            //mTextPaint = new Paint();
             mTextPaint = createTextPaint(getColor(R.color.digital_text));
-            mHourPaint = createTextPaint(getColor(R.color.digital_text), BOLD_TYPEFACE);
+            mHourPaint = createTextPaint(getColor(R.color.digital_text));
             mColonPaint = createTextPaint(getColor(R.color.digital_text));
             mMinutePaint = createTextPaint(getColor(R.color.digital_text));
             mDatePaint = createTextPaint(getColor(R.color.primary_light));
@@ -181,7 +177,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mTempHighPaint = createTextPaint(getColor(R.color.digital_text));
             mTempLowPaint = createTextPaint(getColor(R.color.primary_light));
 
-            //mTime = new Time();
             mCalendar = Calendar.getInstance();
             mDate = new Date();
             initFormats();
@@ -194,7 +189,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             mGoogleApiClient.connect();
 
-            //Log.v(LOG_TAG, "test");
         }
 
         @Override
@@ -218,13 +212,13 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             return paint;
         }
 
-        Paint createTextPaint(int textColor, Typeface typeface) {
-            Paint paint = new Paint();
-            paint.setColor(textColor);
-            paint.setTypeface(typeface);
-            paint.setAntiAlias(true);
-            return paint;
-        }
+//        Paint createTextPaint(int textColor, Typeface typeface) {
+//            Paint paint = new Paint();
+//            paint.setColor(textColor);
+//            paint.setTypeface(typeface);
+//            paint.setAntiAlias(true);
+//            return paint;
+//        }
 
         @Override
         public void onVisibilityChanged(boolean visible) {
@@ -431,7 +425,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         @Override
         public void onConnected(@Nullable Bundle bundle) {
             Wearable.DataApi.addListener(mGoogleApiClient, this);
-            //Log.d(LOG_TAG, "WEARABLE IS CONNECTED:");
         }
 
         @Override
