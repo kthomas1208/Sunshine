@@ -335,7 +335,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             x += mHourPaint.measureText(hourText);
 
             // Draw the colon. Blink if interactive mode.
-            if(mShouldDrawColons)
+            if(mShouldDrawColons || isInAmbientMode())
                 canvas.drawText(":", x, mYOffset, mColonPaint);
             x += mColonPaint.measureText(":");
 
