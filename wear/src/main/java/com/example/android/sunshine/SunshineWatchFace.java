@@ -319,6 +319,9 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mCalendar.setTimeInMillis(now);
             mDate.setTime(now);
 
+            float canvasWidth = canvas.getWidth();
+
+
             // Draw the background.
             if (isInAmbientMode()) {
                 canvas.drawColor(Color.BLACK);
@@ -344,11 +347,18 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             // Draw everything besides time only if in interactive mode
             if(!isInAmbientMode()) {
+
+
+
                 // Draw the date
                 String dayOfWeekDisplay = mDayOfWeekFormat.format(mDate).toUpperCase();
+                // Centering text
+                float textWidth = mDatePaint.measureText(dayOfWeekDisplay);
+                float startingX = canvasWidth/2 - textWidth/2;
+
                 canvas.drawText(
                         dayOfWeekDisplay,
-                        mXOffsetDate, mYOffset + mLineHeight, mDatePaint);
+                        startingX, mYOffset + mLineHeight, mDatePaint);
 
 
                 x = mXOffsetWeather;
